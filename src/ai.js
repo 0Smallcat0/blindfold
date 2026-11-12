@@ -39,14 +39,15 @@ export function initFirebase() {
   if (ai) return ai;
   app = initializeApp(firebaseConfig);
   const siteKey = env.VITE_RECAPTCHA_SITE_KEY;
-  if (env.VITE_APPCHECK_DEBUG_TOKEN || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  const local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (siteKey || env.VITE_APPCHECK_DEBUG_TOKEN || local) {
     // Debug provider: allowed for local dev and for judging (register the token in the Firebase console).
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN || true;
+    if (!siteKey || env.VITE_APPCHECK_DEBUG_TOKEN || local) self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN || true;
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey || 'unset'),
+      isTokenAutoRefreshEnabled: true,
+    });
   }
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(siteKey || 'unset'),
-    isTokenAutoRefreshEnabled: true,
-  });
   ai = getAI(app, { backend: new GoogleAIBackend() });
   return ai;
 }
