@@ -1,0 +1,20 @@
+{
+  "name": "blindfold",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Blindfold: redact on-device with Gemini Nano, reason in the cloud with Gemini, restore locally. Built on Firebase AI Logic hybrid inference.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "firebase": "^13.3.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
