@@ -106,7 +106,7 @@ export function locateEntities(text, entities, source) {
     let idx;
     let found = false;
     while ((idx = lower.indexOf(needle, from)) !== -1) {
-      if (isBoundary(text, idx, idx + s.length)) {
+      if (isBoundary(text, idx, idx + s.length) && !benign(text, idx, s, source)) {
         out.push({ start: idx, end: idx + s.length, text: text.slice(idx, idx + s.length), type, source });
         found = true;
       }
@@ -115,6 +115,19 @@ export function locateEntities(text, entities, source) {
     if (!found) out.push({ start: -1, end: -1, text: s, type, source, ghost: true }); // hallucinated: reported, never applied
   }
   return out;
+}
+
+const MONEY = /^[$€£]\s?\d[\d,]*(?:\.\d+)?$/;
+const DATE_ONLY = new RegExp('^' + DATE + '$', 'i');
+const BIRTH_CUE = /(?:dob|date of birth|birth\s?date|birthday|born)\W{0,3}$/i;
+
+/** Models over-report. Amounts and plain dates are what the cloud needs to reason, so a model-reported money or date
+ *  value is only redacted when a birth cue sits right before it. Rules are not filtered. */
+function benign(text, idx, s, source) {
+  if (!String(source).startsWith('nano')) return false;
+  if (MONEY.test(s)) return true;
+  if (DATE_ONLY.test(s)) return !BIRTH_CUE.test(text.slice(Math.max(0, idx - 24), idx));
+  return false;
 }
 
 function isBoundary(text, a, b) {

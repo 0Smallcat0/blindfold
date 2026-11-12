@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Blindfold benchmark</title>
+    <style>body{font:14px system-ui;margin:24px;max-width:900px}pre{background:#111;color:#ddd;padding:12px;overflow:auto;max-height:420px}input{width:60px}</style>
+  </head>
+  <body>
+    <h1>Blindfold benchmark</h1>
+    <p>Synthetic documents with gold private values. Part 1 needs Gemini Nano; part 2 calls the cloud model.</p>
+    <p>
+      docs <input id="n" value="30" /> seed <input id="seed" value="7" />
+      <button id="go1">Run part 1 (privacy)</button>
+      docs <input id="m" value="10" /> <button id="go2">Run part 2 (utility)</button>
+      <span id="prog"></span>
+    </p>
+    <pre id="out"></pre>
+    <script type="module" src="/bench/run.js"></script>
+  </body>
+</html>

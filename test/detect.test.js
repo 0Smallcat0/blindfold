@@ -40,3 +40,13 @@ test('model-reported strings must exist in the text', () => {
   assert.equal(spans.filter((s) => !s.ghost).length >= 1, true);
   assert.equal(spans.filter((s) => s.ghost).length, 1);
 });
+
+test('model-reported amounts and plain dates are not redacted, birth dates are', () => {
+  const text = 'Amount due: $2,840.00 by November 29, 2026. Patient DOB: 02/14/1989.';
+  const spans = locateEntities(text, [
+    { text: '$2,840.00', type: 'ID' },
+    { text: 'November 29, 2026', type: 'DOB' },
+    { text: '02/14/1989', type: 'DOB' },
+  ], 'nano');
+  assert.deepEqual(spans.filter((x) => !x.ghost).map((x) => x.text), ['02/14/1989']);
+});
