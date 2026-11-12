@@ -44,11 +44,19 @@ async function redactAll(text, log) {
 async function part1(n, seed) {
   const docs = makeDocs(n, seed);
   results.meta = { n, seed, started: new Date().toISOString(), cloudModel: 'see ai.js' };
-  for (const d of docs) {
-    const { red, entsAudit, tNano, tAudit } = await redactAll(d.text, null);
+  const from = Number(new URLSearchParams(location.search).get('from') || 0);
+  for (const d of docs.slice(from)) {
+    const t = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 120000));
+    let r;
+    try { r = await Promise.race([redactAll(d.text, null), t]); } catch (e) {
+      fetch('http://127.0.0.1:8787/bench_doc_' + d.id, { method: 'POST', body: JSON.stringify({ id: d.id, error: String(e.message) }) });
+      $('prog').textContent = 'stuck at ' + d.id; return;
+    }
+    const { red, entsAudit, tNano, tAudit } = r;
     const per = {};
     for (const c of CONFIGS) per[c] = score(red[c], d);
     results.docs.push({ id: d.id, kind: d.kind, per: Object.fromEntries(Object.entries(per).map(([k, v]) => [k, { leaked: v.leaked.map((g) => g.text + ' [' + g.type + ']'), lost: v.lost.map((k2) => k2.text), nGold: v.nGold, nKeep: v.nKeep }])), tNano: Math.round(tNano), tAudit: Math.round(tAudit), redacted: red['rules+nano+audit'] });
+    fetch('http://127.0.0.1:8787/bench_doc_' + d.id, { method: 'POST', body: JSON.stringify(results.docs[results.docs.length - 1]) });
     window.__benchDocs = docs;
     (window.__benchEnts ||= {})[d.id] = entsAudit;
     $('prog').textContent = `part 1: ${results.docs.length}/${n}`;

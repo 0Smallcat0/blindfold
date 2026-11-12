@@ -46,3 +46,17 @@ You need a Firebase project with Firebase AI Logic enabled (Gemini Developer API
 ## License
 
 Apache-2.0, see `LICENSE`.
+
+## Benchmark
+
+30 synthetic documents (seed 7; bills, leases, tax notices, claim denials, free-form letters), 180 private values and 120 values that must survive (amounts, dates, organisations). Everything runs on-device with Gemini Nano; the harness is `bench.html` + `bench/`. Raw results: `bench/results/run2-after-filter.json`.
+
+| Redaction | Private values leaked | Useful values lost | Documents fully clean |
+| --- | --- | --- | --- |
+| none | 180 / 180 (100%) | 0 | 0 / 30 |
+| rules only (regex + Luhn) | 30 (16.7%) | 0 | 18 / 30 |
+| Nano only | 18 (10.0%) | 2 (1.7%) | 12 / 30 |
+| rules + Nano | 4 (2.2%) | 2 (1.7%) | 26 / 30 |
+| rules + Nano + audit pass | 4 (2.2%) | 6 (5.0%) | 26 / 30 |
+
+Per document on this machine: Nano detection about 12 s on average (median 10.9 s), audit pass about 7 s (median 6.2 s). The four remaining leaks are person names written inside free-form prose. The audit pass did not reduce leaks here; its main value is a second check before anything leaves the device. Before the `benign()` filter (model-reported amounts and plain dates are no longer redacted) the same pipeline lost 42% of the useful values (`bench/results/run1-before-filter.json`).
