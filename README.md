@@ -34,7 +34,7 @@ npm run dev
 npm test
 ```
 
-You need a Firebase project with Firebase AI Logic enabled (Gemini Developer API, free Spark plan is enough). On `localhost` the app uses an App Check debug token: open the console, copy the printed token, and register it under App Check > Apps > Manage debug tokens. Set `VITE_APPCHECK_DEBUG_TOKEN` to use a fixed token, or `VITE_RECAPTCHA_SITE_KEY` to use reCAPTCHA v3 instead. `VITE_CLOUD_MODEL` overrides the cloud model (default `gemini-3.5-flash`).
+You need a Firebase project with Firebase AI Logic enabled (Gemini Developer API, free Spark plan is enough). On `localhost` the app uses an App Check debug token: open the console, copy the printed token, and register it under App Check > Apps > Manage debug tokens. For a hosted build, create a reCAPTCHA key for your domain, register it under App Check > Apps (Fraud Defense / reCAPTCHA Enterprise) and set `VITE_RECAPTCHA_SITE_KEY`; the hosted build contains no debug token. The app limits itself to 5 cloud calls per minute per session. `VITE_CLOUD_MODEL` overrides the cloud model (default `gemini-3.5-flash`).
 
 ## Layout
 

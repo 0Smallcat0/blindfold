@@ -3,7 +3,7 @@
 //   - reasoning model : InferenceMode.ONLY_IN_CLOUD   -> Gemini in the cloud, only ever sees redacted text
 //   - quick model     : InferenceMode.PREFER_ON_DEVICE-> safe to use only because its input is already redacted
 import { initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, Schema } from 'firebase/ai';
 import { locateEntities, splitChunks, TYPES } from './detect.js';
 
@@ -40,11 +40,11 @@ export function initFirebase() {
   app = initializeApp(firebaseConfig);
   const siteKey = env.VITE_RECAPTCHA_SITE_KEY;
   const local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (siteKey || env.VITE_APPCHECK_DEBUG_TOKEN || local) {
-    // Debug provider: allowed for local dev and for judging (register the token in the Firebase console).
-    if (!siteKey || env.VITE_APPCHECK_DEBUG_TOKEN || local) self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN || true;
+  // Debug provider only on localhost (the token comes from the dev's own .env.local, never from a hosted build).
+  if (local) self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN || true;
+  if (siteKey || local) {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey || 'unset'),
+      provider: new ReCaptchaEnterpriseProvider(siteKey || 'unset'),
       isTokenAutoRefreshEnabled: true,
     });
   }
@@ -185,7 +185,16 @@ const ANALYST = (redacted, question) =>
   `DOCUMENT:\n"""\n${redacted}\n"""\n\nQUESTION: ${question}`;
 
 /** Cloud reasoning on redacted text. `depth` 'deep' = ONLY_IN_CLOUD, 'quick' = PREFER_ON_DEVICE (hybrid). */
+const CALLS = [];
+function rateLimit(max = 5, windowMs = 60000) {
+  const now = Date.now();
+  while (CALLS.length && now - CALLS[0] > windowMs) CALLS.shift();
+  if (CALLS.length >= max) throw new Error(`Slow down: at most ${max} cloud calls per minute per session.`);
+  CALLS.push(now);
+}
+
 export async function analyze(redacted, question, depth, log) {
+  rateLimit();
   const m = getModels();
   const model = depth === 'quick' ? m.quick : m.cloud;
   const t0 = performance.now();
