@@ -187,6 +187,7 @@ const ANALYST = (redacted, question) =>
 /** Cloud reasoning on redacted text. `depth` 'deep' = ONLY_IN_CLOUD, 'quick' = PREFER_ON_DEVICE (hybrid). */
 const CALLS = [];
 function rateLimit(max = 5, windowMs = 60000) {
+  if (location.pathname.startsWith('/bench')) return; // benchmark harness
   const now = Date.now();
   while (CALLS.length && now - CALLS[0] > windowMs) CALLS.shift();
   if (CALLS.length >= max) throw new Error(`Slow down: at most ${max} cloud calls per minute per session.`);

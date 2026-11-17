@@ -71,6 +71,7 @@ $('enable').addEventListener('click', async () => {
 
 async function ensureNano() {
   if (state.ready) return true;
+  if (state.nano === 'unknown') await refreshDevice(); // scan clicked before the first availability check finished
   if (state.nano === 'available' || state.nano === 'downloading') {
     state.ready = await prepareNano();
     await refreshDevice();
